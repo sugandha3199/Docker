@@ -1,0 +1,23 @@
+# Stage 1: Build Stage
+FROM ubuntu AS build
+WORKDIR /app
+
+# Copy only the necessary files for installing dependencies
+COPY requirements.txt /app
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    pip3 install --upgrade pip && \
+    pip3 install -r requirements.txt
+
+# Stage 2: Production Stage
+FROM ubuntu AS production
+WORKDIR /app
+
+# Copy only the necessary files for the final image
+COPY --from=build /usr/bin/python3 /usr/bin/python3
+COPY --from=build /usr/lib/python3 /usr/lib/python3
+COPY --from=build /app /app
+
+# Set the entrypoint and default command
+ENTRYPOINT ["python3"]
+CMD ["manage.py", "runserver", "0.0.0.0:8000"]
